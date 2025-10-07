@@ -24,7 +24,7 @@ create_redirect() {
   
   # Ensure source doesn't start with s3:// or bucket name
   source="${source#s3://}"
-  source="${source#${BUCKET}/}"
+  source="${source#"${BUCKET}"/}"
   
   # Construct full S3 path
   local s3_path="s3://${BUCKET}/${source}"

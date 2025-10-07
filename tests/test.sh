@@ -80,7 +80,7 @@ test_source_normalization() {
   source="s3://test-bucket/old-path/"
   bucket="test-bucket"
   source="${source#s3://}"
-  source="${source#${bucket}/}"
+  source="${source#"${bucket}"/}"
   
   if [ "${source}" = "old-path/" ]; then
     pass "Correctly normalized s3:// prefix"
@@ -90,7 +90,7 @@ test_source_normalization() {
   
   # Test removing bucket name
   source="test-bucket/another-path/"
-  source="${source#${bucket}/}"
+  source="${source#"${bucket}"/}"
   
   if [ "${source}" = "another-path/" ]; then
     pass "Correctly normalized bucket name prefix"
