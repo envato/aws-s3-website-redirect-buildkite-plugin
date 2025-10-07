@@ -48,7 +48,7 @@ steps:
       - envato/aws-s3-sync#v0.5.0:
           source: docs/.vitepress/dist/
           destination: s3://example.com/my-project/
-      - envato/aws-s3-website-redirect#v0.1.0:
+      - envato/aws-s3-website-redirect#v0.2.0:
           bucket: example.com
           source: my-project/old-api-docs.html
           destination: https://example.com/my-project/api-reference.html
@@ -64,7 +64,7 @@ steps:
       - envato/aws-s3-sync#v0.5.0:
           source: docs/.vitepress/dist/
           destination: s3://example.com/my-project/
-      - envato/aws-s3-website-redirect#v0.1.0:
+      - envato/aws-s3-website-redirect#v0.2.0:
           bucket: example.com
           redirects:
             - source: my-project/quickstart.html
@@ -81,7 +81,7 @@ steps:
 steps:
   - label: ":books: Publish Docs"
     plugins:
-      - envato/aws-s3-website-redirect#v0.1.0:
+      - envato/aws-s3-website-redirect#v0.2.0:
           bucket: my-docs-bucket
           region: ap-southeast-2
           redirects:
@@ -167,7 +167,7 @@ Modify your existing "Publish Docs" step in `.buildkite/pipeline.yml`:
         destination: s3://example.com/my-project/
         delete: true
     # Add redirects after syncing
-    - envato/aws-s3-website-redirect#v0.1.0:
+    - envato/aws-s3-website-redirect#v0.2.0:
         bucket: example.com
         source: my-project/old-getting-started.html
         destination: https://example.com/my-project/getting-started.html
@@ -192,7 +192,7 @@ For projects with multiple renamed or moved pages:
     - envato/aws-s3-sync#v0.5.0:
         source: docs/.vitepress/dist/
         destination: s3://example.com/my-project/
-    - envato/aws-s3-website-redirect#v0.1.0:
+    - envato/aws-s3-website-redirect#v0.2.0:
         bucket: example.com
         region: us-east-1
         redirects:
@@ -218,7 +218,7 @@ Create a separate step to add redirects without redeploying content:
   plugins:
     - envato/aws-assume-role#v0.2.0:
         role: arn:aws:iam::123456789012:role/docs-role
-    - envato/aws-s3-website-redirect#v0.1.0:
+    - envato/aws-s3-website-redirect#v0.2.0:
         bucket: example.com
         redirects:
           - source: my-project/deprecated-feature.html
@@ -230,7 +230,7 @@ Create a separate step to add redirects without redeploying content:
 ### Example 4: Redirecting Individual Pages
 
 ```yaml
-- envato/aws-s3-website-redirect#v0.1.0:
+- envato/aws-s3-website-redirect#v0.2.0:
     bucket: example.com
     source: my-project/old-page.html
     destination: https://example.com/my-project/new-page.html
@@ -239,7 +239,7 @@ Create a separate step to add redirects without redeploying content:
 ### Example 5: Redirecting to External Documentation
 
 ```yaml
-- envato/aws-s3-website-redirect#v0.1.0:
+- envato/aws-s3-website-redirect#v0.2.0:
     bucket: example.com
     source: my-project/external-integration.html
     destination: https://external-docs.example.com/integration-guide.html
@@ -348,7 +348,7 @@ When restructuring documentation, deploy new structure first, then add redirects
 - label: ":redirect: Add Migration Redirects"
   command: "echo 'Setting up redirects...'"
   plugins:
-    - envato/aws-s3-website-redirect#v0.1.0:
+    - envato/aws-s3-website-redirect#v0.2.0:
         bucket: example.com
         redirects:
           - source: my-project/installation.html
