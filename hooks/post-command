@@ -67,7 +67,7 @@ else
       
       if [[ -n "${source}" ]] && [[ -n "${destination}" ]]; then
         create_redirect "${source}" "${destination}"
-        ((redirect_count++))
+        redirect_count=$((redirect_count + 1))
       fi
     fi
   done < <(env | grep "^BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_REDIRECTS_" | sort)
