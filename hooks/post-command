@@ -1,0 +1,82 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "--- :s3: Setting up S3 website redirects"
+
+# Get plugin configuration
+BUCKET="${BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_BUCKET:-}"
+REGION="${BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_REGION:-us-east-1}"
+
+
+# Validate bucket is provided
+if [[ -z "${BUCKET}" ]]; then
+  echo "❌ Error: 'bucket' parameter is required"
+  exit 1
+fi
+
+# Build AWS CLI options
+AWS_OPTS="--region ${REGION}"
+
+# Function to create a redirect
+create_redirect() {
+  local source="$1"
+  local destination="$2"
+  
+  # Ensure source doesn't start with s3:// or bucket name
+  source="${source#s3://}"
+  source="${source#${BUCKET}/}"
+  
+  # Construct full S3 path
+  local s3_path="s3://${BUCKET}/${source}"
+  
+  echo "Creating redirect: ${source} → ${destination}"
+  
+  # Use the aws s3 cp command with --website-redirect to create the redirect
+  # shellcheck disable=SC2086
+  if aws s3 cp ${AWS_OPTS} --website-redirect "${destination}" - "${s3_path}" <<< ""; then
+    echo "✅ Successfully created redirect from ${source} to ${destination}"
+  else
+    echo "❌ Failed to create redirect from ${source} to ${destination}"
+    exit 1
+  fi
+}
+
+# Check if single redirect mode or array mode
+if [[ -n "${BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_SOURCE:-}" ]] && \
+   [[ -n "${BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_DESTINATION:-}" ]]; then
+  # Single redirect mode
+  echo "Processing single redirect..."
+  SOURCE="${BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_SOURCE}"
+  DESTINATION="${BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_DESTINATION}"
+  create_redirect "${SOURCE}" "${DESTINATION}"
+else
+  # Array mode - iterate through redirects
+  echo "Processing multiple redirects..."
+  redirect_count=0
+  
+  while IFS= read -r var; do
+    if [[ "${var}" =~ ^BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_REDIRECTS_([0-9]+)_SOURCE= ]]; then
+      index="${BASH_REMATCH[1]}"
+      
+      # Get source and destination for this index
+      source_var="BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_REDIRECTS_${index}_SOURCE"
+      dest_var="BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_REDIRECTS_${index}_DESTINATION"
+      
+      source="${!source_var:-}"
+      destination="${!dest_var:-}"
+      
+      if [[ -n "${source}" ]] && [[ -n "${destination}" ]]; then
+        create_redirect "${source}" "${destination}"
+        ((redirect_count++))
+      fi
+    fi
+  done < <(env | grep "^BUILDKITE_PLUGIN_AWS_S3_WEBSITE_REDIRECT_REDIRECTS_" | sort)
+  
+  if [[ ${redirect_count} -eq 0 ]]; then
+    echo "⚠️  Warning: No redirects were configured"
+  else
+    echo "✅ Successfully created ${redirect_count} redirect(s)"
+  fi
+fi
+
+echo "--- :white_check_mark: S3 website redirects complete"

@@ -1,0 +1,87 @@
+# Example pipeline showing how to use the s3-website-redirect plugin
+
+agents:
+  queue: platform-x86-large
+
+steps:
+  # Example 1: Single redirect after publishing docs
+  - label: ":books: Publish Docs with Single Redirect"
+    command:
+      - "yarn install"
+      - "yarn docs build"
+    plugins:
+      - envato/aws-assume-role#v0.2.0:
+          role: arn:aws:iam::123456789012:role/docs-role
+      - docker#v5.3.0:
+          image: node:18-alpine
+          environment:
+            - CI
+      - envato/aws-s3-sync#v0.5.0:
+          source: docs/.vitepress/dist/
+          destination: s3://example.com/my-project/
+          delete: true
+      # Add a single redirect
+      - s3-website-redirect:
+          bucket: example.com
+          source: my-project/old-getting-started/
+          destination: https://example.com/my-project/getting-started/
+
+  # Example 2: Multiple redirects
+  - label: ":books: Publish Docs with Multiple Redirects"
+    command:
+      - "yarn install"
+      - "yarn docs build"
+    plugins:
+      - envato/aws-assume-role#v0.2.0:
+          role: arn:aws:iam::123456789012:role/docs-role
+      - docker#v5.3.0:
+          image: node:18-alpine
+      - envato/aws-s3-sync#v0.5.0:
+          source: docs/.vitepress/dist/
+          destination: s3://example.com/my-project/
+          delete: true
+      # Add multiple redirects at once
+      - s3-website-redirect:
+          bucket: example.com
+          region: us-east-1
+          redirects:
+            # Redirect old CLI docs to new location
+            - source: my-project/cli/
+              destination: https://example.com/my-project/reference/cli/
+            # Redirect deprecated API docs
+            - source: my-project/api/v1/
+              destination: https://example.com/my-project/api/v2/
+            # Redirect old tutorial
+            - source: my-project/tutorials/basic-setup/
+              destination: https://example.com/my-project/getting-started/
+            # Redirect renamed section
+            - source: my-project/configuration/
+              destination: https://example.com/my-project/reference/configuration/
+
+  # Example 3: Redirects with custom region
+  - label: ":books: Publish to Different Region"
+    command:
+      - "yarn docs build"
+    plugins:
+      - s3-website-redirect:
+          bucket: my-docs-bucket
+          region: ap-southeast-2
+          redirects:
+            - source: old-path/
+              destination: https://example.com/new-path/
+            - source: legacy/
+              destination: https://example.com/current/
+
+  # Example 4: Standalone redirect step (without uploading new content)
+  - label: ":redirect: Add Documentation Redirects"
+    command: "echo 'Adding redirects only'"
+    plugins:
+      - envato/aws-assume-role#v0.2.0:
+          role: arn:aws:iam::123456789012:role/docs-role
+      - s3-website-redirect:
+          bucket: example.com
+          redirects:
+            - source: my-project/deprecated-feature/
+              destination: https://example.com/my-project/
+            - source: my-project/moved-page.html
+              destination: https://example.com/my-project/new-location.html

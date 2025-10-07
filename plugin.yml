@@ -1,0 +1,44 @@
+name: aws-s3-website-redirect
+description: Add website redirects via S3 by setting x-amz-website-redirect-location metadata
+author: https://github.com/envato
+requirements:
+  - aws-cli
+
+configuration:
+  properties:
+    redirects:
+      type: array
+      items:
+        type: object
+        properties:
+          source:
+            type: string
+            description: The S3 path to redirect from (e.g., "my-old-docs/")
+          destination:
+            type: string
+            description: The URL to redirect to (e.g., "https://example.com/my-new-docs/")
+        required:
+          - source
+          - destination
+    bucket:
+      type: string
+      description: The S3 bucket name (e.g., "example.com")
+    region:
+      type: string
+      description: The AWS region for the S3 bucket
+      default: us-east-1
+    source:
+      type: string
+      description: The S3 path to redirect from (single redirect mode)
+    destination:
+      type: string
+      description: The URL to redirect to (single redirect mode)
+  additionalProperties: false
+  oneOf:
+    - required:
+        - redirects
+        - bucket
+    - required:
+        - source
+        - destination
+        - bucket
